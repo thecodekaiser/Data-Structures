@@ -1,0 +1,17 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define MXLVL 32
+#define MXLEN 100005
+
+struct tuple
+{
+	int a[2];
+	int original;
+} L[MXLEN];
+
+int sortIndex[MXLVL][MXLEN];
+
+

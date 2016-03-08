@@ -1,0 +1,96 @@
+/**
+ * The main idea is that we compute the Z-Function for the string.
+ * At each index i in the Z-function, we get the length of longest prefix-substring that starts from i.
+ * We do this by taking into consideration the idea of Z-Box.
+ *
+ * Author: thecodekaiser 
+ **/
+#include <bits/stdc++.h>
+using namespace std;
+
+void compute_Z(int * Z, string str)
+{
+	Z[0] = 0;		// First value is always 0
+	int L = 0, R = 0;
+
+	int N = str.length();
+
+	for(int i = 1; i < N; i++)
+	{
+		if(i > R)
+		{
+			// No Z-Box has reached its end point till i
+			// So we can do a fresh scan comparing str[0..] with str[i...]
+	
+			L = R = i;
+			while(R < N and str[R-L] == str[R]) R++;
+			Z[i] = R-L;	// Length of prefix
+			R--;
+		}
+		else
+		{
+			// This is the case where i lies in the computed Z-Box
+
+			int K = i - L;			// This is where we will find K in the prefix
+			
+			if(Z[K] < R - i + 1)
+				Z[i] = Z[K];		// Now we can't extend it
+			else
+			{
+				L = i;			// Now we got to compute new Z-Box
+				while(R < N and str[R-L] == str[R]) R++;
+				Z[i] = R - L;
+				R--;
+			}
+		}
+	}
+
+	return;
+}
+
+void solve()
+{
+	string pat, text;
+	cout << "Enter the text: " ;
+	cin >> text;
+
+	cout << "Enter the pattern: " ;
+	cin >> pat;
+
+	string str = pat + '$' + text;
+	int N = str.length();
+	int Z[N];
+	
+	vector<int> ans;
+	compute_Z(Z, str);
+	for(int i = 0; i < N; i++)
+	{
+		if(Z[i] == pat.length())
+		{
+			ans.push_back(i-pat.length()-1);
+		}
+	}
+
+	if(ans.size() == 0)
+		cout << "Pattern doesn't occur in the string\n";
+	else
+	{
+		cout << "Pattern occurrs " << ans.size() << " times in the string.\n";
+		for(int i = 0; i < ans.size(); i++)
+			cout << i+1 << endl;
+	}
+
+	return;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while(t--)
+		solve();
+
+	return 0;
+}
+
+ 

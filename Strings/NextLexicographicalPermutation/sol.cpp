@@ -1,0 +1,136 @@
+// Author: thecodekaiser
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <string>
+#include <algorithm>
+
+using namespace std;
+
+void swap(char * a, char * b)
+{ char temp = * a; * a = * b; * b = temp; }
+
+int giveNext(string & str)
+{
+	int i, N;
+	N = str.size();
+
+	for(i = N-2; i >= 0; i--)
+	   if(str[i] < str[i+1])
+	   {
+		break;
+	   }
+
+	//cout << i << endl;
+	if(i != -1)
+	{
+		int pivot = i;
+
+		//cout << "Pivot element: " << str[pivot] << " i: " << i << endl;
+		for(i = N-1; i > pivot; i--)
+			if(str[i] > str[pivot])
+				break;
+
+		swap(str[pivot], str[i]);
+		int start = pivot + 1;
+		int end = (N-1-pivot)/2 + pivot;
+
+		for(int i = start; i <= end; i++)
+			swap(str[i], str[N-1-i + pivot+1]);
+
+		return 1;
+	}
+	else
+		return 0;
+}
+
+int givePrev(string & str)
+{
+	int i, N;
+	N = str.size();
+
+	for(i = N-2; i >= 0; i--)
+	   if(str[i] > str[i+1])
+	   {
+		//cout << "Pivot: " << str[i] << " i: " << i <<  endl;
+		break;
+	   }
+
+	//cout << i << endl;
+	if(i != -1)
+	{
+		int pivot = i;
+
+		//cout << "Pivot element: " << str[pivot] << " i: " << i << endl;
+		for(i = pivot+1; i < N; i++)
+			if(str[i] > str[pivot])
+				break;
+
+		i--;
+
+		swap(str[pivot], str[i]);
+
+		int start = pivot + 1;
+		int end = (N-1-pivot)/2 + pivot;
+
+		for(int i = start; i <= end; i++)
+			swap(str[i], str[N-1-i + pivot+1]);
+
+		return 1;
+	}
+	else
+		return 0;
+}
+
+void solve()
+{
+	string str;
+	cin >> str;
+	while(giveNext(str))
+		cout << str << endl;
+
+
+	cout << "\n" << str << endl;
+	while(givePrev(str))	
+		cout << str << endl;
+	
+	return ;
+}
+
+void next()
+{
+	string str;
+	cin >> str;
+	
+	int code = giveNext(str);
+	if(code)	
+		cout << str << endl;
+	else
+		cout << "No next permutation" << endl;
+}
+
+void prev()
+{
+	string str;
+	cin >> str;
+	
+	int code = givePrev(str);
+	if(code)	
+		cout << str << endl;
+	else
+		cout << "No prev permutation" << endl;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while(t--)
+	{
+		next();
+		cout << "\n" ;
+		prev();
+		cout << "\n";
+	}
+	return 0;
+}
