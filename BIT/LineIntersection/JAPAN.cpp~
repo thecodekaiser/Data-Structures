@@ -1,0 +1,107 @@
+// Author: thecodekaiser
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <map>
+#include <vector>
+#include <cstring>
+#include <algorithm>
+
+using namespace std;
+typedef long long ll;
+#define MAXN 1010
+
+vector<int> GPH[MAXN];
+
+class BIT
+{
+private:
+	ll tree[MAXN];
+	int len;
+
+	// Set
+	void SET(int i, int val)
+	{
+		while(i < MAXN)
+		{
+			tree[i] += val;
+			i        = i + (i & -i);
+		}
+	}
+
+	// Get
+	ll GET(int i)
+	{
+		ll res = 0;
+		while(i >= 1)
+		{
+			res += tree[i];
+			i    = i - (i & -i);
+		}
+		return res;
+	}
+
+public:
+	// Constructor
+	BIT(int N)
+	{
+		memset(tree, 0, sizeof(tree));
+		len = N;
+	}
+
+	void countINV()
+	{
+		ll ans = 0, val;
+		int w;
+		for(int i = len; i >= 1; i--)
+		{
+		//	cout << i << " --> ";
+			for(int j = GPH[i].size()-1; j >= 0 ; j--)
+			{
+				w = GPH[i][j];
+				val   = GET(w-1);
+				ans += val;
+		//		cout << w << " : " << val << " , ";
+				SET(w,1);
+			}
+		//	cout << endl;
+		}
+	
+		printf("%lld\n",ans);
+	}	
+};
+
+void solve()
+{
+	int N, M, Q;
+	scanf("%d %d %d",&N, &M, &Q);
+
+	int x, y;
+	for(int i = 0; i < MAXN; i++)	GPH[i].clear();
+
+	for(int i = 0; i < Q; i++)
+	{
+		scanf("%d %d",&x, &y);
+		GPH[x].push_back(y);	// City x (on east coast) is connected to city y (on west coast)
+	}
+
+	for(int i = 1; i <= N; i++)
+		sort(GPH[i].begin(), GPH[i].end());
+
+	
+	BIT bt(N);		// Let's do it;
+	
+	bt.countINV();
+
+	return;
+}
+
+int main()
+{
+	int t;
+	scanf("%d",&t);
+	while(t--)
+		solve();
+	return 0;
+}
+	
