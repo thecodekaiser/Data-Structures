@@ -1,0 +1,69 @@
+// Author: thecodekaiser
+// This one uses BFS
+#include <bits/stdc++.h>
+using namespace std;
+
+int flag;
+
+void dfs(int src, vector<int> gph[], vector<bool> & vis, vector<int> & col)
+{
+	if(!vis[src])
+	{
+		vis[src] = 1;
+
+		for(int i = 0; i < gph[src].size(); i++)
+		{
+			int ch = gph[src][i];
+			if(col[src] == col[ch])
+				{ flag = 1; return; }
+
+			if(!vis[ch])
+			{
+				col[ch] = !col[src];
+				dfs(ch, gph, vis, col);
+			}
+		}
+	}
+	return;
+}	
+
+void solve()
+{
+	int N, M;		// N -> No of vertices, M -> No of edges
+	cin >> N >> M;	
+
+	vector<int> gph[N+1];
+	int A, B;
+
+	for(int i = 0; i < M; i++)
+	{
+		cin >> A >> B;
+		gph[A].push_back(B);
+		gph[B].push_back(A);
+	}
+
+	vector<bool> vis(N+1,0);	
+	vector<int> col(N+1, 0);
+
+	for(int i = 0; i < N; i++) col[i] = -1;
+	
+	col[1] = 1;
+
+	dfs(1, gph, vis, col);
+	cout << endl;
+
+	if(!flag)
+		cout << "It is a bipartite graph\n";
+	else
+		cout << "No, it is not a bipartite graph\n";
+
+	return;
+}
+
+int main()
+{
+	solve();
+	return 0;
+}
+	
+	

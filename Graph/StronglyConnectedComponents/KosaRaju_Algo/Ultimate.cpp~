@@ -1,0 +1,285 @@
+/**
+ * This is the best implementation of the Kosaraju's Algorithm that I could 
+ * manage.After lots of tries I stuck with this implementation.
+ * It uses adjacency list representation of the graph.
+ * It employs the famous 2-Pass DFS algo.
+ * Author: thecodekaiser
+*/
+
+
+#include <iostream>
+#include <fstream>
+#include <vector>
+#include <algorithm>
+#include <cstdlib>
+#include <map>
+#include <string>
+#include <list>
+
+using namespace std;
+
+
+// Prototypes
+long getCNT(char * File_Name);						// Reads in the file and determines the highest node found yet
+vector< vector<long> > makeGraph(char * File_Name);			// Returns a graph in the form of the vector of adjacency lists
+vector< vector<long> > revGraph(vector< vector<long> > graph);		// Return a reversed graph 
+void dfs_loop(const vector< vector<long> > &graph, vector<long> &finTime, vector<long> &leader);  // Runs the dfs loop from the Algo
+long dfs(const vector< vector<long> > &graph, long V, vector<bool> &explored, vector<long> &finTime, long t, vector<long> &leader, long s); 
+								// Main dfs of the graph						
+
+map< long, vector<long> > giveSCC(const vector< vector<long> > &graph); 	// Gives the SCCs in the form of map of integers
+list <unsigned long> largestSCC(const map<long, vector<long> > SCC, int N);    // Returns a list of 'N' largest SCCs in the graph
+
+int main()
+{
+	// Ask for the file name
+	char * ch = (char * )malloc(100 * sizeof(char));
+	printf("Please enter the file name: ");
+	scanf("%s",ch);
+
+	// Create graph
+	vector< vector<long> > graph = makeGraph(ch);
+//	cout << "GRAPH CREATED" << endl;
+//	cout << graph.size() << endl;
+
+	// Get the SCCs from the graph
+	map< long, vector<long> > SCCs = giveSCC(graph);
+
+    	// Compute the largest 5 components and print them out
+    	list<unsigned long> largestComponents = largestSCC(SCCs, 5);
+
+    	list<unsigned long>::iterator it;
+    	for (it = largestComponents.begin(); it != largestComponents.end(); it++) {
+        	cout << *it << ' ';
+    	}
+    	cout << endl;
+
+    	return 0;
+}
+
+/**	
+ *  Read in the file and construct the graph.
+ */
+vector< vector<long> > makeGraph(char * File_Name)
+{
+	long nodes = getCNT(File_Name);
+//	cout << "CNT: " << nodes << endl;
+	// Here is the graph
+	vector< vector<long> > graph(nodes);
+
+	// Opening the file
+	ifstream fin(File_Name);
+	long Node;			// This is the value in the first column. It denoted the tail of the edge b/w Node & outGoing
+	long outGoing; 			// This is the value in the second column. It denotes the head of the edge b/w Node & outGoing
+	while(fin)
+	{
+		fin >> Node;
+		fin >> outGoing;
+		// Assign y to x's adjacency list. That is add an outgoing edge to x's list
+		graph[Node-1].push_back(outGoing-1);
+	}
+
+	return graph;
+}
+
+
+/**
+ *  Read in the file and return the required  no of total nodes in the graph.
+ *  Note : This gives the highest node encountered in the file.
+ */
+long getCNT(char * File_Name)
+{
+	// Open the file and keep track of the higest node encountered
+	ifstream fin(File_Name);
+	
+	long Node = 0;
+	long MaxNode = 0;
+
+	while(fin)
+	{
+		// Check the node value
+		fin >> Node;
+		
+		if(Node > MaxNode)
+		{
+			MaxNode = Node;
+		}
+	
+		// Check the outgoing node value
+		fin >> Node;	
+				
+		if(Node > MaxNode)
+		{
+		  	MaxNode = Node;
+		}
+	}
+	
+	return MaxNode;
+}
+
+
+/**
+ *  Loop the graph and create a reversed directed graph by looping through each node/edge pair
+ *  and recording the reverse
+ */
+vector< vector<long> > revGraph(vector< vector<long> > graph)
+{
+	// Make a new graph
+	vector< vector<long> > reversed(graph.size());
+	
+	// Loop through all elements and fill new graph with reversed endpoints
+    	vector< vector<long> >::const_iterator it;
+    	for (it = graph.begin(); it != graph.end(); it++) {
+        	long nodeIndex = it - graph.begin();
+
+        	// Loop through all outgoing edges, and reverse them in new graph
+        	vector<long>::const_iterator eit;
+        	for (eit = graph[nodeIndex].begin(); eit != graph[nodeIndex].end(); eit++) {
+            		reversed[*eit].push_back(nodeIndex);
+        	}	
+    	}
+	return reversed;
+}
+
+/**
+ *  Compute a depth-first search of all the nodes of a graph
+ */
+void dfs_loop(const vector< vector<long> > & graph, vector<long> &finTime, vector<long> &leader)
+{
+	// Create a bool flag table which keeps an account of the whether the current node has already been explored
+	vector<bool> explored(graph.size(),0);
+	
+	//cout << "DONE in dfs_loop" << endl;
+
+	// Create a copy of finTime because we will change fin_time during the process
+	vector<long> loopFinTime = finTime;
+
+	long t = 0;			// Time-tracker
+
+	// Outer loop through all nodes in order to cover disconnected
+    	// sections of the graph
+	vector<long>::reverse_iterator it;
+	
+	for (it = loopFinTime.rbegin(); it != loopFinTime.rend(); it++)
+ 	{
+        	// Compute a depth-first search if the node hasn't
+       	 	// been expanded yet
+        	if (!explored[*it]) {
+            		t = dfs(graph, *it, explored, finTime, t, leader, *it);
+        	}
+    	}
+	//cout << "DONE in dfs_loop" << endl;
+}
+
+/**
+ * Search through a directed graph recursively, beginning at node 'nodeIndex' (V),
+ * until no more node can be searched, recording the finishing times and the 
+ * leaders
+ */
+long dfs(const vector< vector<long> > &graph, long V, vector<bool> &explored, vector<long> &finTime, long t, vector<long> &leader, long s) 
+{
+    // Mark the current node as explored
+    explored[V] = true;
+
+    // Set the leader to the given leader
+    leader[V] = s;
+
+    // Loop through outgoing edges
+    vector<long>::const_iterator it;
+
+    for (it = graph[V].begin(); it != graph[V].end(); it++) {
+        // Recursively call DFS if not explored
+        if (!explored[*it]) {
+            t = dfs(graph, *it, explored, finTime, t, leader, s);
+        }
+    }
+
+    // Update the finishing time
+    finTime[t] = V;
+    t++;
+
+    return t;
+}
+
+
+/**
+ * Compute all of the strongly-connected components of a graph
+ * using depth-first search, Kosaraju's 2-pass method
+ */
+map< long, vector<long> > giveSCC(const vector< vector<long> > &graph)
+{
+	// Create finishing time and the leader vectors to store the data from search
+	vector<long> finTime(graph.size(),0);
+	vector<long> leader(graph.size(),0);
+
+	//cout << "CAME" << endl; 
+	// Initialize the finish times to the numbers of the graph
+	vector<long> :: iterator it;
+	long index = 0;
+	for(it = finTime.begin(); it != finTime.end(); it++)
+	{
+		*it = index;
+		 index++;
+	}
+
+	//cout << "CAME" << endl; 
+	// Reverse the graph and compute the finish times
+	vector< vector<long> > reversed = revGraph(graph);
+	//cout << "REVERSED" << endl;
+
+	dfs_loop(reversed,finTime,leader);
+	
+	//cout << "1st loop" << endl;
+
+	// Compute the SCC leaders using the second pass
+	dfs_loop(graph,finTime,leader);
+	
+	//cout << "2nd loop" << endl;
+
+	// Distribute nodes to the SCCs
+	map<long , vector<long> > SCCs;
+	vector<long> :: iterator ITER;
+
+	for(ITER = leader.begin(); ITER != leader.end(); ITER++)
+	{
+		long Nd = ITER - leader.begin();
+		// Append node to SCC
+		SCCs[*ITER].push_back(Nd);
+	}
+
+	cout << SCCs.size() << endl;
+
+	return SCCs;
+}
+
+
+/**
+ *  Give the largest 'n' strongly-connected components and return the list
+ *
+ */
+list <unsigned long> largestSCC(map<long, vector<long> > SCCs, int N) 	
+{
+	// Create vector to hold the largest 'N' components
+	  list<unsigned long> largest(N, 0);	
+	
+	// Iterate through map and keep track of largest components
+   	 map< long, vector<long> >::const_iterator it;
+    	for (it = SCCs.begin(); it != SCCs.end(); it++) {
+        	// Search through the current largest list to see if there exists
+        	// an SCC with less elements than the current one
+        	list<unsigned long>::iterator lit;
+        
+		for (lit = largest.begin(); lit != largest.end(); lit++) {
+     		       // Compare size and change largest if needed, inserting
+            		// the new one at the proper position, and popping off the old
+            
+			if (*lit < it->second.size()) {
+		                largest.insert(lit, it->second.size());
+		                largest.pop_back();
+		                break;
+		        }
+        	}
+    	}
+
+    	return largest;
+}

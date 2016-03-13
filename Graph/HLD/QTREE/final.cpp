@@ -1,0 +1,322 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define MXN 10100
+#define root 1
+#define LVL 14
+#define INF 1000000007
+
+// Required things
+vector<int> gph[MXN], idxx[MXN], costs[MXN], pa[MXN];	// GPH -> Adjacency List, idxx -> Stores which node is connected to which node
+							// costs -> Cost of ith edge from a node
+int baseArray[MXN];
+int ptr, timer, l;	
+int chainNo, chainHead[MXN], posInBase[MXN], chainInd[MXN];		// Will be used for HLD
+int depth[MXN],otherEnd[MXN], subsize[MXN];		// Will be used during dfs and later to determine LCA
+int in[MXN], out[MXN];
+
+int tree[6*MXN];
+
+void build(int Node, int l, int r)
+{
+	if(l == r)
+	{
+		tree[Node] = baseArray[l];
+		return;
+	}
+
+	int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+	build(left, l, mid);
+	build(right, mid+1, r);
+
+
+	tree[Node] = max(tree[left], tree[right]);
+	return;
+}
+
+void update(int Node, int l, int r, int i, int new_val)
+{
+	if(i > r or i < l)
+		return;
+
+	if(l == r)
+	{
+		tree[Node] = new_val;
+		return;
+	}
+
+	int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+	if(i <= mid)
+		update(left, l, mid, i, new_val);
+	else		
+		update(right, mid+1, r, i, new_val);
+
+
+	tree[Node] = max(tree[left], tree[right]);
+	return;
+}
+
+int query(int Node, int l, int r, int i, int j)
+{
+	if(l > r or i > r or j < l)
+		return -INF;
+
+	if(i <= l and r <= j)
+		return tree[Node];
+
+	int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+	int v1 = query(left, l, mid, i, j);
+	int v2 = query(right, mid+1, r, i, j);
+
+	return max(v1, v2);
+}
+
+void dfs(int cur, int pre = 1, int _depth = 0) 
+{
+	depth[cur] = _depth;
+	in[cur] = ++ timer;
+	subsize[cur] = 1;
+	
+	pa[cur][0] = pre;
+	
+	for (int i = 1; i <= l; ++ i)
+		pa[cur][i] = pa[pa[cur][i-1]][i-1];
+	
+	for (int i = 0; i < gph[cur].size(); ++i)
+	{
+		if (gph[cur][i] != pre)
+		{
+			otherEnd[idxx[cur][i]] = gph[cur][i];
+			dfs(gph[cur][i], cur, _depth+1);
+			subsize[cur] += subsize[gph[cur][i]];
+		}
+	}
+	out [cur] = ++timer;
+}
+
+bool upper (int a, int b) 
+{
+	return in [a] <= in [b] && out [a] >= out [b];
+}
+
+// LCA: Give two nodes u and v .. returns their LCA
+int LCA(int a, int b) 
+{
+	if (upper (a, b)) return a;
+	if (upper (b, a)) return b;
+
+	for (int i = l; i >= 0; --i)
+		if (! upper (pa [a] [i], b))
+			a = pa [a] [i];
+
+	return pa [a] [0];
+}
+
+// HLD
+void HLD(int curNode, int cost, int prev)
+{
+	if(chainHead[chainNo] == -1)
+	{
+		// Starting a new chain
+		chainHead[chainNo] = curNode;	// Assign a chain head
+	}
+ 
+	chainInd[curNode]  = chainNo;		// This node belongs to chainNo chain
+	posInBase[curNode] = ptr;		// We assign this place to curNode
+	baseArray[ptr++]   = cost;		// We have now given this place to it
+
+	//cout << "curNode: " << curNode << " cainNo: " << chainNo << " posInBase[curNode]: " << posInBase[curNode] << " baseArray[ptr]:  " << cost << endl;
+		
+	int sc = -1, ncost;	// sc -> Special Child
+	for(int i = 0; i < gph[curNode].size(); i++)
+	{
+		if(gph[curNode][i] != prev)
+		{
+			if(sc == -1 || subsize[sc] < subsize[gph[curNode][i]])
+			{
+				sc = gph[curNode][i];
+				ncost = costs[curNode][i];
+			}
+		}
+	}
+ 
+	if(sc != -1)	
+	{
+		// We have found a special child
+		HLD(sc, ncost, curNode);
+	}
+			
+	// Now form a new chain from each of the normal children
+	for(int i = 0; i < gph[curNode].size(); i++)
+	{
+		if(gph[curNode][i] != prev)
+		{
+			if(sc != gph[curNode][i])
+			{
+				chainNo++;
+				HLD(gph[curNode][i], costs[curNode][i], curNode);
+			}
+		}
+	}
+ 
+	return;
+}
+
+void dothis(int N)
+{
+	for(int i = 0; i < ptr; i++)
+		cout << baseArray[i] << " ";
+	cout << endl;
+
+	for(int i = 1; i <= N; i++)
+		cout << posInBase[i] << " ";
+	cout << endl;
+
+	for(int i = 1; i <= N-1; i++)
+		cout << otherEnd[i] << " ";
+	cout << endl;
+
+	for(int i = 1; i <= 7; i++)
+		cout << tree[i] << " ";
+	cout << endl;
+
+	return;
+}
+
+// Change
+void change(int i, int val)
+{
+	//cout << "Edge: " << i << endl;
+	int u = otherEnd[i];
+	//cout << "Updating: " << u << " posInBase[u]: " << posInBase[u] << endl;
+	update(1, 0, ptr-1, posInBase[u], val);
+}
+
+// query_up: This is the most important function
+int qup(int u, int v)
+{
+	if(u == v) return 0;		// Base case
+	int uchain, vchain = chainInd[v], ans = -1;
+	//cout << "v: " << v << " vchain: " << vchain << endl;
+
+	// uchain and vchain are chainNumbers of u and v
+	while(1)
+	{
+		uchain = chainInd[u];
+		//cout << "uchain: " << uchain << endl;
+
+		if(uchain == vchain)
+		{
+			// Both u and v are in the same chain .. update ans and then break
+			if(u == v) break; 
+			// pos of v will always be lower since it is the LCA
+			int val = query(1, 0, ptr-1, posInBase[v]+1, posInBase[u]);	
+
+			//cout << "u: " << u << " v: " << v << endl;
+			//cout << "posInBase[v]: " << posInBase[v] << " posInBase[u]: " << posInBase[u] << " val: " << val << endl;
+			if(val > ans)
+				ans = val;
+			break;
+		}
+ 
+		int val = query(1, 0, ptr-1, posInBase[chainHead[uchain]], posInBase[u]);
+		//cout << "chainHead[uchain]: " << chainHead[uchain] << endl;
+		//cout << "posInBase[chainHead[uchain]]: " << posInBase[chainHead[uchain]] << " posInBase[u]: " << posInBase[u] << endl;
+
+		// We are propagating upwards
+		if(val > ans) ans = val;
+		u = chainHead[uchain];	// Now we are going to chain head
+		u = pa[u][0];		// Now we are going to another chain
+	}
+ 
+	return ans;
+}
+
+// Calc
+void calc(int u, int v)
+{
+	int lca = LCA(u,v);
+	//cout << "u: " << u << " v: " << v << " lca: " << lca << endl;
+	int ans = qup(u,lca);	
+	int temp = qup(v, lca);
+	
+	printf("%d\n",max(ans,temp));
+	return;
+}
+	
+void solve()
+{
+	int N, x, y, edcost;
+	scanf("%d", &N);
+
+	l = 1;
+	while((1 << l) <= (N+1)) l++;
+	for(int i = 1; i <= N; i++)
+		pa[i].resize(l+1);
+
+	// Reinitialization
+	for(int i = 1; i <= N+1; i++)
+	{
+		gph[i].clear();
+		costs[i].clear();
+		idxx[i].clear();
+		chainHead[i] = -1;
+	}
+
+	// Reading in the edges
+	for(int i = 1; i < N; i++)
+	{
+		scanf("%d %d %d",&x, &y, &edcost);
+		
+		gph[x].push_back(y);
+		costs[x].push_back(edcost);
+		idxx[x].push_back(i);
+	
+		gph[y].push_back(x);
+		costs[y].push_back(edcost);
+		idxx[y].push_back(i);
+	}
+
+	ptr = 0, chainNo = 0;
+	timer = 0;
+
+	dfs(root);		// Setting the depth, parent, subtree
+	HLD(root, -INF, -1); 	// Doing the HLD
+	build(1, 0, ptr-1);
+
+	//dothis(N);
+	
+
+	while(1)
+	{
+		char buffer[100];
+		scanf("%s", buffer);
+		if(buffer[0] == 'D')
+			break;
+
+		scanf("%d %d",&x, &y);
+		if(buffer[0] == 'Q')
+		{
+			calc(x, y);
+		}
+		else
+		{
+			change(x, y);
+		}
+	}
+	
+	return;
+}
+
+int main()
+{
+	int t;
+	cin >> t;
+	while(t--)
+		solve();
+
+	return 0;
+}
+	

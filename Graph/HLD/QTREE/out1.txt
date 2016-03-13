@@ -1,0 +1,41 @@
+curNode: 1  chainInd[curNode]: 0 posInBase[curNode]: 0 baseArrapy[ptr]: -1
+curNode: 2  chainInd[curNode]: 0 posInBase[curNode]: 1 baseArrapy[ptr]: 11
+curNode: 7  chainInd[curNode]: 0 posInBase[curNode]: 2 baseArrapy[ptr]: 9
+curNode: 9  chainInd[curNode]: 0 posInBase[curNode]: 3 baseArrapy[ptr]: 2
+curNode: 10  chainInd[curNode]: 1 posInBase[curNode]: 4 baseArrapy[ptr]: 3
+curNode: 8  chainInd[curNode]: 2 posInBase[curNode]: 5 baseArrapy[ptr]: 5
+curNode: 11  chainInd[curNode]: 2 posInBase[curNode]: 6 baseArrapy[ptr]: 4
+curNode: 3  chainInd[curNode]: 3 posInBase[curNode]: 7 baseArrapy[ptr]: 10
+curNode: 4  chainInd[curNode]: 3 posInBase[curNode]: 8 baseArrapy[ptr]: 1
+curNode: 5  chainInd[curNode]: 3 posInBase[curNode]: 9 baseArrapy[ptr]: 6
+THIS IS THE BASE ARRAY:
+-1 11 9 2 3 5 4 10 1 6 
+
+u: 6 v: 5 lca: -1
+chainInd[u]: 0 chainInd[v]: 0 chainInd[lca]: 0
+v: -1 chainInd[v]: 0
+uchain: 0 vchain: 0 ans: -1
+posInBase[v]: 0 posInBase[u]: 2 qt[1]: 11
+v: -1 chainInd[v]: 0
+uchain: 0 vchain: 0 ans: -1
+posInBase[v]: 0 posInBase[u]: 0 qt[1]: -1
+11
+
+u: 0 v: 10 lca: 0
+chainInd[u]: 0 chainInd[v]: 2 chainInd[lca]: 0
+v: 0 chainInd[v]: 0
+uchain: 2 vchain: 0 ans: -1
+posInBase[chainHead[uchain]]: 5 posInBase[u]: 6 qt[1]: 5
+uchain: 0 vchain: 0 ans: 5
+posInBase[v]: 0 posInBase[u]: 1 qt[1]: 11
+11
+
+u: 0 v: 9 lca: 0
+chainInd[u]: 0 chainInd[v]: 1 chainInd[lca]: 0
+v: 0 chainInd[v]: 0
+uchain: 1 vchain: 0 ans: -1
+posInBase[chainHead[uchain]]: 4 posInBase[u]: 4 qt[1]: 3
+uchain: 0 vchain: 0 ans: 3
+posInBase[v]: 0 posInBase[u]: 2 qt[1]: 9
+9
+

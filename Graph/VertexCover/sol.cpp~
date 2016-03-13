@@ -1,0 +1,112 @@
+/**
+ * This one uses a greedy algorithm:
+ * 1. For each leaf select its parent
+ * 2. For each internal select it if any of it's son is not selected
+ * 
+ * It can be easily solved using DFS.
+ *
+ * EDIT: WA with this approach
+ * For ex: This test case:
+ *               9
+		1 2
+		2 3
+		3 4
+		4 5
+		5 6
+		6 7
+		4 8
+		8 9
+ * Author: thecodekaiser
+ */
+#include <bits/stdc++.h>
+using namespace std;
+
+typedef long long ll;
+#define MXN 100010
+
+void dfs(int src, vector<int> gph[], vector<int> & ans, vector<bool> & selected, vector<bool> & vis)
+{
+	if(!vis[src])
+	{
+	//	cout << "VISITED: " << src << endl;
+		vis[src] = 1;
+
+		// Check if it's a leaf node
+
+		if(gph[src].size() == 1)
+		{
+			// If this leaf itself has not been added to the vertex cover then add it's parent to vertex cover
+			if(selected[src] == 0)
+			{
+				if(selected[gph[src][0]] == 0)
+				{
+	//				cout << "SELECTING: " << gph[src][0] << endl;
+					selected[gph[src][0]] = true;
+					ans.push_back(gph[src][0]);
+				}
+
+				if(!vis[gph[src][0]])
+					dfs(gph[src][0], gph, ans, selected, vis);
+
+				return;
+			}
+		}
+		else
+		{
+			int flag = 0;
+
+			for(int i = 0; i < gph[src].size(); i++)
+			{
+				if(!vis[gph[src][i]])
+					dfs(gph[src][i], gph, ans, selected, vis);
+	
+				if(selected[gph[src][i]])
+					flag = 1;
+			}
+
+			if(!flag)
+			{
+				if(!selected[src])
+				{
+	//				cout << "SELECTED: " << src << endl;
+					selected[src] = 1;
+					ans.push_back(src);
+				}
+			}
+
+			return;
+		}
+	}
+
+	return;
+}
+
+void solve()
+{
+	int N;
+	cin >> N;
+
+	vector<int> gph[N+1];
+	vector<bool> selected(N+1, 0), vis(N+1, 0);
+	vector<int> ans;
+
+	int x, y;
+	for(int i = 0; i < N-1; i++)
+	{
+		cin >> x >> y;
+		gph[x].push_back(y);
+		gph[y].push_back(x);
+	}
+
+	dfs(1, gph, ans, selected, vis);
+
+	cout << ans.size() << endl;
+	return;
+}
+
+int main()
+{
+	solve();
+	return 0;
+} 
+			

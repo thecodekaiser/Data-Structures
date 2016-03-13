@@ -1,0 +1,52 @@
+So this the algorithm to have a HLD:
+
+HLD(curNode, Chain):
+    Add curNode to curChain
+    If curNode is LeafNode: return                    //Nothing left to do
+    sc := child node with maximum sub-tree size       //sc is the special child
+    HLD(sc, Chain)                                    //Extend current chain to special child
+    for each child node cn of curNode:                //For normal childs
+        if cn != sc: HLD(cn, newChain)                //As told above, for each normal child, a new chain starts
+
+
+Now a piece of code:
+
+CODE: (in C++)
+
+  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*
+	
+	int chainNo=0, chainHead[N], chainPos[N], chainInd[N], chainSize[N];
+	memset(chainHead, -1, sizeof(chainHead));
+
+	// All except chainHead are set to 0
+
+	void hld(int cur) 
+	{
+	    if(chainHead[chainNo] == -1) chainHead[chainNo]=cur;
+	    chainInd[cur] = chainNo;
+	    chainPos[cur] = chainSize[chainNo];
+	    chainSize[chainNo]++;
+	 
+	    // Finding the son with the max subtree size
+	    int ind = -1,mai = -1;
+	    for(int i = 0; i < adj[cur].sz; i++) 
+	    {
+	         if(subsize[ adj[cur][i] ] > mai) 
+		 {
+		    mai = subsize[ adj[cur][i] ];
+		    ind = i;
+		 }
+	    }
+	 
+	    // Once we have the special child we can form our chain
+	    if(ind >= 0) hld( adj[cur][ind] );
+	 
+	    for(int i = 0; i < adj[cur].sz; i++) {
+		if(i != ind) {
+		    chainNo++;
+		    hld( adj[cur][i] );
+		}
+	    }
+	}	
+			
+  *-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*-*

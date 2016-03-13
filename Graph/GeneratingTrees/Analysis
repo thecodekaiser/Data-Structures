@@ -1,0 +1,6 @@
+Here I am generating trees using the concept of WeightedQuick Union.
+I will give a limit of Nodes in the tree and then the function will generate the 
+tree having N-1 nodes in the tree.
+
+It create edges between any two nodes if they are not in the same group.
+

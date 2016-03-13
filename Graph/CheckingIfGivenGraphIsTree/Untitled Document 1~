@@ -1,0 +1,56 @@
+// Solution for is it a tree
+// Author: thecodekaiser
+
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <vector>
+
+using namespace std;
+#define pb push_back
+
+// If the graph is a tree it returns 0 else 1
+int dfs(int Start, int * Visited, vector<vector<int> > graph)
+{
+	Visited[Start] = 1;
+	for(int i = 0; i < graph[Start].size(); i++)
+	{
+		if(Visited[graph[Start][i]] == 1)
+			return 1;
+		else
+			dfs(graph[Start][i], Visited, graph);
+	}
+	return 0;
+}
+
+void solve()
+{
+	int N, M;
+
+	cin >> N >> M;
+
+	vector<vector<int> > graph(N+1, vector<int>());
+	int * Visited = (int *) calloc ((N+1), sizeof(int));
+
+	int X, Y;
+	for(int i = 0; i < M; i++)
+	{
+		cin >> X >> Y;
+		graph[X].pb(Y);
+	}
+
+	int res = dfs(1,Visited, graph);
+
+	if(res)
+		cout << "NO" << endl;
+	else 	cout << "YES" << endl;
+	
+	free(Visited);
+	return ;
+}
+
+int main()
+{
+	solve();
+	return 0;
+}

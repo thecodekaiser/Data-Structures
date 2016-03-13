@@ -1,0 +1,305 @@
+/* This component is to handle the file input and construct a list of vertex 
+   from the given file and then solve the problem using the UF-datastructure.
+   Author: thecodekaiser
+*/
+
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <string>
+#include <fstream>
+#include <sstream>
+#include <ctime>
+#include <cmath>
+
+using namespace std;
+#define INF 1000000
+
+class WeightedUF
+{
+public:
+	int * id, * sz;
+	int count;
+
+	// Public constructor
+	WeightedUF(int N)
+	{
+		count = N;
+		id = (int *) calloc (N+1,sizeof(int));
+		sz = (int *) calloc (N+1,sizeof(int));
+		for(int i = 0; i < N+1; i++)
+		{
+			id[i] = i;
+			sz[i] = 1;
+		}
+	}
+
+
+	// Function: To return the number of components
+	int CNT()
+	{ 
+		return count;
+	}
+
+	// Function: To give the root of a node in the tree
+	// Uses path compression
+	// What we are doing is that we are pointing all members of a component directly to the root
+	int find(int p)
+	{
+		int root = p ;
+		while (root != id[root])
+			root = id[root];
+		while (p != root)
+		{
+			int newp = id[p];
+			id[p] = root;           // Here we are directly pointing every element to the root directly which will help us later
+			p = newp;
+		}
+		return root;
+	}
+
+	// Function: To check if two components are connected i.e are in the same component
+	int connected(int i, int j)
+	{
+		return find(i) == find(j);
+	}
+
+	// Function : To connect two elements using the weighting principle
+	void Union(int i, int j)
+	{
+		int p = find(i);
+		int q = find(j);
+		if (p == q) return ;
+
+		// Point smaller tree to the larger tree
+		if	(sz[p] < sz[q])			{ id[p] = q;	sz[q] += sz[p]; }
+		else						{ id[q] = p;	sz[p] += sz[q]; }
+		count --;
+		return ;
+	}
+};
+
+// Defining the node that I will use 
+struct Node {
+	int T,H;
+	Node * next;
+};
+
+// Declaring a linked list
+class LinkedList
+{
+public:
+	// Declaring the ends of the linked list
+	Node * front;
+	int count;	// To keep the count of elements in the list
+	int nodes;
+	// Public Constructor
+public:
+	LinkedList()
+	{
+		front = NULL;
+		count = 0;
+	}
+
+	// Method to put some data at the beginning of some linked list
+	void push(int H, int T)
+	{
+		// Check if the data is null
+		if(H == NULL || T == NULL)
+		{
+			cout<<" NULL DATA INSSERTION IS NOT ALLOWED "<<endl;
+			return;             // Exit 
+		}
+		// Else create a temp node
+		Node * temp = new Node();
+		temp->H = H;
+		temp->T = T;
+		temp->next = NULL;
+		// Check that if it is the first element then we have to link first to the last
+		if(count == 0)
+		{
+			front = temp;
+		}
+		else
+		{
+			// Fix the links and append it to the list
+			temp->next = front;
+			front = temp;
+		}
+		count += 1;		// Increase the count
+	}
+
+	// Function : To delete an element of the linked list
+	int Del(Node * h)
+	{
+		Node * temp, *prev;
+		temp = front;
+		while(temp != NULL)
+		{
+			if(temp == h)
+			{
+				if(temp == front)
+				{	
+					front = temp->next;
+					free(temp);
+					count -= 1;
+					return 1;				// 1-> denotes success
+				}
+				else
+				{
+					prev->next = temp->next;
+					free(temp);
+					count -= 1;				
+					return 1;
+				}
+			}
+			else
+			{
+				prev = temp;
+				temp = temp ->next;
+			}
+		}
+		return 0;
+	}
+
+	// Function : To pop a random element from the linked list
+	Node * pop_random()
+	{
+		Node * h = front, *p;
+		p = new Node();
+		int r = rand() % count + 1, i = 1;
+		while(i <= r-1)
+		{
+			h = h -> next;
+			i++;
+		}
+		
+		// Set values in p
+		p ->H = h -> H, p -> T = h -> T;
+		// Delete h
+		Del(h);
+		
+		return p;
+	}
+
+
+
+
+
+
+	// Method to give the count of elements in the list
+	int Count()
+	{
+		return count;
+	}	
+	// Method to print the whole list in front to end order
+	void print()
+	{
+		Node * temp = front;
+		while(temp != NULL)
+		{
+			cout<<"("<<temp->H<<", "<<temp->T<<")"<<endl;
+			temp = temp->next;
+		}
+		cout<<"COUNT: "<<count<<endl;
+	}
+
+	void prt(int x)
+	{
+		int i = 1;
+		Node * h = front;
+		while(i <= x-1)
+			h = h -> next, i++;
+
+		cout << h -> H << "," << h -> T << endl;
+		return ;
+	}
+
+
+};
+// Function : To build the graph out of given file input
+void buildGraph(LinkedList & l) {
+		  ifstream File_Reader("4.txt");
+		  
+		  int ** ptr = (int **)malloc(201*sizeof(int*));
+		  for(int i =0;i<201;i++)	ptr[i] = (int *)calloc(201,sizeof(int));
+
+		  string line;
+		  int x = 0;
+		  int y = 0;
+		  int edgeIndex = 0;
+
+		  while (getline(File_Reader, line)) { //Reads the file line by line
+			istringstream iss(line);
+			iss >> x;  //Assigns the first 'word' (integer) to x
+
+
+			while (iss >> y) {  //Loops through the rest of the line, assigning each 'word' (integer) to y one at a time
+				if(ptr[x][y] == 0 && ptr[y][x] == 0)
+				{
+					l.push(x,y);
+					ptr[x][y] = 1;
+				}
+			}
+		  }
+		  for(int i = 0; i < 201; i++) free(ptr[i]);
+		  free(ptr);
+	}
+
+// Main method to solve the problem
+int  solve(LinkedList ll)
+{
+	WeightedUF ww(40);
+	Node * random;
+	int i,j;
+	while (ww.CNT() > 2)
+	{
+		random = ll.pop_random();
+		i = random -> H, j = random -> T;
+		if (!ww.connected(i,j))
+		{
+			ww.Union(i,j);
+		}
+	}
+
+	int cnt = 0;
+	Node * temp = ll.front;
+	while(temp != NULL)
+	{
+		i = temp -> H, j = temp -> T;
+
+		if(!ww.connected(i,j))
+		{
+			cnt += 1;
+		//	cout << i << "," << j << endl;
+		}
+
+		temp = temp -> next;
+	}
+
+	return cnt;
+}
+
+
+
+
+int main()
+{
+	srand(time(0));
+	
+
+	int min = INF;
+	for(int i = 0; i < 200; i++)
+	{
+		LinkedList ll;
+	    	buildGraph(ll);
+		int c = solve(ll);
+		if(c < min)
+			min = c;
+	}
+	cout << min << endl;
+	
+	return 0;
+
+}
+
