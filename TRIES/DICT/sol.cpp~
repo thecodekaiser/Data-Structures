@@ -1,0 +1,147 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+
+struct Node
+{
+	int prefixes, words;
+	Node * arr[26];
+
+	Node()
+	{
+		for(int i = 0; i < 26; i++)
+			arr[i] = NULL;
+	}
+
+	~Node()
+	{
+		for(int i = 0; i < 26; i++)
+			if(arr[i] != NULL)
+				delete arr[i];
+	}
+};
+
+class Trie
+{
+private:
+	// Instance variables
+	Node * root;		
+
+public:
+	// Constructor
+	Trie()
+	{
+		root = new Node();
+	}
+
+	// Destructor
+	~Trie()
+	{
+		delete root;
+	}
+
+	// Function: Insert
+	void insert(string word)
+	{
+		int len = word.length(), lev, idx;
+
+		Node * curr = root;
+		
+		for(lev = 0; lev < len; lev++)
+		{
+			idx = word[lev] - 'a';
+			curr -> prefixes += 1;
+	
+			if(curr -> arr[idx] == NULL)	curr -> arr[idx] = new Node();
+
+			curr = curr -> arr[idx];
+		}
+		
+		curr -> prefixes += 1;
+		curr -> words    += 1;
+	}
+
+	void dfs(Node * curr, string str, vector<string> & strSet)
+	{
+		int lev;
+		char ch;
+	
+		if(curr -> words == 1)
+			strSet.push_back(str);
+
+		for(lev = 0; lev < 26; lev++)
+			if(curr -> arr[lev] != NULL)
+			{
+				ch = 'a' + lev;	
+				dfs(curr -> arr[lev], str + ch, strSet);
+			}
+
+		return;
+	}
+
+	int doDFS(string word, vector<string> & strSet)
+	{
+		int len = word.length(), lev, idx;
+
+		Node * curr = root;
+
+		for(lev = 0; lev < len; lev++)
+		{		
+			idx = word[lev] - 'a';
+			
+			if(curr -> arr[idx] == NULL)
+				return 0;
+			
+			curr = curr -> arr[idx];
+		}
+
+		dfs(curr, word, strSet);
+
+		if(strSet.size() == 1)
+			return 0;
+		else
+			return 1;
+	}
+};
+
+void solve()
+{
+	int N, M;
+	
+	cin >> N;
+
+	string str, curr;
+	vector<string> strSet;
+	Trie T;
+
+	for(int i = 0; i < N; i++)
+	{
+		cin >> str;
+		T.insert(str);
+	}
+	
+	cin >> M;
+	for(int i = 0; i < M; i++)
+	{
+		cin >> str;
+		strSet.clear();
+
+		int code = T.doDFS(str, strSet);
+		if(code == 0)
+			printf("Case #%d:\nNo match.\n", i+1);
+		else
+		{
+			printf("Case #%d:\n", i+1);
+			for(int j = 1; j < strSet.size(); j++)
+				cout << strSet[j] << "\n";
+		}
+	}
+
+	return;
+}
+
+int main()
+{
+	solve();
+	return 0;
+}
