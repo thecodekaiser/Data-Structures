@@ -1,0 +1,79 @@
+// Author: thecodekaiser
+// This code finds the maximum number in a given range and also finds the no of its occurances in that range
+#define _CRT_SECURE_NO_DEPRECATE
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+
+using namespace std;
+typedef long long LL;
+#define INF 1000007
+
+template <typename T> struct data
+{
+	T ans, pref, suff, sum;
+};
+
+template <typename T> data<T> combine(data<T> A, data<T> B)
+{
+	data<T> res;
+
+	res.sum  = A.sum + B.sum;
+	res.pref = max(A.pref, A.sum + B.pref);
+	res.suff = max(B.suff, B.sum + A.suff);
+	res.ans  = max(max(A.ans, B.ans), A.suff + B.pref);
+
+	return res;
+}
+
+
+  
+template <typename T> class SEG
+{
+
+private:
+	T * copyArr;
+	data * tree;
+	int len;
+
+	// Function : To build the tree
+	void build(int Node, int l, int r)
+	{
+		if(l == r)
+		{
+		}
+		else
+		{
+			int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+	
+		}
+	}
+
+	// Query operation
+
+public:
+	// Constructor
+	SEG(T * arr, int N)
+	{
+		len = N;
+		copyArr = (T *) malloc (len * sizeof(T));
+	}
+
+	// Query
+	void query(int i, int j)
+	{
+	}
+	
+	// Updation
+	void update(int i, T value)
+	{
+	}
+
+};
+	
+
+int main()
+{
+	return 0;
+}	

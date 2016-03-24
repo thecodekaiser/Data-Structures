@@ -1,0 +1,170 @@
+// Author: thecodekaiser
+#define _CRT_SECURE_NO_DEPRECATE
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+#include <cmath>
+
+using namespace std;
+typedef long long LL;
+
+
+// This function can be changed to use Seg-Tree as you want it
+// Currently --> It returns the minimum of two numbers
+int func(int A, int B)
+{
+	return min(A,B);
+}
+
+struct Node
+{
+	int value, left, right;
+	
+public:
+	Node(int l, int r)
+	{ 	left = l, right = r;	}
+
+	void merge(Node leftChild, Node rightChild)
+	{
+		if	(leftChild.value  == NULL)	value = rightChild.value;
+		else if	(rightChild.value == NULL) 	value = leftChild.value;
+		else			  	  	value = func(leftChild.value, rightChild.value);
+	}
+};
+
+
+// Defining the class for RMQ
+class RMQ
+{
+private:
+	Node * tree;
+	int  * arr;
+	int len;
+	int size;
+
+	// Function : To build the tree recursively
+	void build(int node, int l, int r)
+	{
+		// If leaf node
+		if(l == r)
+		{
+			tree[node] = Node(l,r);
+			tree[node].value = arr[l];
+			return;
+		}
+
+		// Get the indices for the right and left child
+		int leftChild = 2 * node, rightChild = 2 * node + 1, mid = (l + r)/2;
+
+		// Recursively build the tree
+		build(leftChild, l, mid);
+		build(rightChild, mid + 1, r);
+	
+		// Set the vaule for this node
+		tree[node] = Node(l,r);
+		tree[node].merge(tree[leftChild], tree[rightChild]);
+	}
+
+	// Function : To do the query
+	int query(int node, int l, int r, int i, int j)
+	{
+		int a, b;
+
+		if	(i > r  or  j < l) 		return -1;		  // Completely out of the bounds
+		else if	(i <= l and j >= r)		return tree[node].value;  // Completely in the bound
+		else
+		{
+			int leftC = 2 * node, rightC = 2 * node + 1, mid = (l + r) / 2;
+			
+			a = query(leftC, l, mid, i, j);
+			b = query(rightC, mid+1, r, i, j);
+			
+			if(a == -1) return b;
+			if(b == -1) return a;
+			if(a <= b)  return a;
+			else	    return b;
+		}
+	}
+
+	// To update some node in the tree
+	void update(int node, int l, int r, int i, int Value)
+	{
+		if	(l == r and l == i) tree[node].value += Value;
+		else if	(i > r  or  i < l)  return;
+		else
+		{
+			int leftC = 2 * node, rightC = 2 * node + 1, mid = (l + r) / 2;
+			update(leftC, l, mid, i, Value);
+			update(rightC, mid+1, r, i, Value);
+
+			tree[node].merge(tree[leftC], tree[rightC]);
+		}
+	}
+			
+	void print(int N)
+	{
+		for(int i = N; i < size; i++)
+			if(tree[i].left == tree[i].right and tree[i].right == 0 and tree[i].value == 0)
+				continue;
+			else
+				cout << tree[i].left << "," << tree[i].right << " value: " << tree[i].value << endl;
+	}		
+
+public: 
+	// Our constructor
+	RMQ(int * ptr, int N)
+	{
+		int power = (int) floor(log(N) / log(2)) + 1;
+		size      = (int) 2 * pow(2.0, power + 0.0);
+		tree 	  = (Node *) malloc (size * sizeof(Node));
+		arr	  = (int * ) malloc (N * sizeof(int));
+		len 	  = N;
+
+		for(int i = 0; i < len; i++) arr[i] = ptr[i];
+
+		build(1, 0, len-1);
+	}
+
+	// Query
+	int query(int i, int j)
+	{
+		int result = query(1, 0, len-1, i, j);
+		return result;
+	}
+
+	// Update on a point
+	void update(int i, int newValue)
+	{
+		arr[i] += newValue;
+		update(1, 0, len-1, i, newValue);
+	}
+		
+};
+
+int main()
+{
+	int N, Q;
+	cin >> N >> Q;
+	int ptr[N];
+	for(int i = 0; i < N; i++)	cin >> ptr[i];
+	RMQ seg(ptr,N);
+
+	int c, l, r, val;
+	for(int i = 0; i < Q; i++)
+	{
+		cin >> c;
+		if(c == 0)
+		{
+			cin >> l >> val;
+			seg.update(l,val);
+		}
+		else
+		{
+			cin >> l >> r;
+			cout << seg.query(l-1,r-1) << endl;
+		}
+	}
+
+	return 0;
+
+} 

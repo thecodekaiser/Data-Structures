@@ -1,0 +1,240 @@
+// Author: thecodekaiser
+#include <bits/stdc++.h>
+using namespace std;
+ 
+typedef long long ll;
+#define MXN 500050
+#define GETC getchar_unlocked()
+ 
+int ptr[MXN], N;
+int pos[MXN];
+ 
+template <typename T> T read()
+{
+	T n = 0;
+	int ch = GETC, sign = 1;
+	while(ch < '0' or ch > '9') { if(ch == '-') sign = -1; ch = GETC; }	
+	while(ch >= '0' and ch <= '9')
+	{
+		n = n * 10 + ch - '0';
+		ch = GETC;
+	}
+	n *= sign;
+	return n;
+}
+ 
+struct node
+{
+	int * arr, * ls, * rs;
+	int sz;
+} tree[MXN*4];
+ 
+// Cascader
+void cascade(int Node,int child, int code = 0)
+{
+	int i = 0, j = 0;
+	while(i < tree[Node].sz)
+	{
+		// Find the first position in child array where we will find arr[i] if we binary search for it in this array
+		while(tree[Node].arr[i] > tree[child].arr[j] and j < tree[child].sz)	j++;	
+		
+		if(!code)
+			tree[Node].ls[i++] = j;		// Fill up the array for the left-traversal
+		else
+			tree[Node].rs[i++] = j;		// Fill up the array for the right-traversal
+	}
+ 
+	if(!code)
+		tree[Node].ls[i] = tree[child].sz;
+	else
+		tree[Node].rs[i] = tree[child].sz;
+ 
+	return;
+}
+ 
+// Merger of two children
+void merge(int Node, int lc, int rc)
+{
+	int i = 0, j = 0, k = 0;
+ 
+	while(i < tree[lc].sz and j < tree[rc].sz)
+	{
+		if(tree[lc].arr[i] > tree[rc].arr[j])
+		{
+			tree[Node].arr[k++] = tree[rc].arr[j++];
+		}
+		else
+		{
+			tree[Node].arr[k++] = tree[lc].arr[i++];
+		}
+	}
+ 
+	while(i < tree[lc].sz)
+		tree[Node].arr[k++] = tree[lc].arr[i++];
+ 
+	while(j < tree[rc].sz)
+		tree[Node].arr[k++] = tree[rc].arr[j++];
+ 
+	return;
+}
+ 
+// Builder
+void build(int Node, int l, int r)
+{
+	if(l == r)
+	{
+		tree[Node].arr = (int *) malloc (1 * sizeof(int));
+		tree[Node].sz = 1;
+		tree[Node].arr[0] = ptr[l];
+		return;
+	}
+ 
+	int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+ 
+	build(left, l, mid);	build(right, mid+1, r);
+ 
+	tree[Node].sz = r - l + 1;	// Determining the size
+	tree[Node].arr = (int * ) malloc ((r-l+3) * sizeof(int));
+	tree[Node].ls  = (int * ) malloc ((r-l+3) * sizeof(int));
+	tree[Node].rs  = (int * ) malloc ((r-l+3) * sizeof(int));
+ 
+	merge(Node, left, right);	// Creating the arr list for this node and also calculating the inversions
+			
+	cascade(Node, left, 0);		// Creating the ls list for this node
+	cascade(Node, right, 1);	// Creating the rs list for this node
+	
+	return;
+}
+ 
+bool found;
+int curr;
+ 
+// Function: Query
+int query(int Node, int l, int r, int pos, int i, int j)
+{
+	//cout << "Node: " << Node << " l: " << l << " r: " << r << " pos: " << pos << " i: " << i << " j: " << j << endl;
+	if(i > r or j < l)
+		return 0LL;
+		
+	if(i <= l and r <= j)
+	{
+		if(tree[Node].arr[pos] == curr)
+			found = true;
+			
+		ll val;
+		if(pos == tree[Node].sz)
+			val = pos;
+		else	
+			val = pos + ((tree[Node].arr[pos] < curr) ? 1 : 0); 
+		
+	//	cout << "VAL: " << val << endl;
+		return val;
+	}
+	
+	int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+ 
+	return query(left, l, mid, tree[Node].ls[pos], i, j) + query(right, mid+1, r, tree[Node].rs[pos], i, j);
+}
+ 
+int getKth(int i, int j, int k)
+{	
+	if(i > j)
+		swap(i,j);
+		
+	int lo = 0, hi = N-1, mid;	
+	
+	while(lo <= hi)
+	{
+		mid = (lo+hi)>>1;
+ 
+		curr = tree[1].arr[mid];		// Cause the range is found at the top node
+		
+	//	cout << "LO: " << lo << " HI: " << hi << " MID: " << mid << " Checking for curr: " << curr << endl;
+		found = false;
+ 
+		int res = query(1, 0, N-1, mid, i, j);
+		
+	//	cout << "HERE Total res: " << res << endl;
+ 
+		if(res == k - 1 and found)
+		{
+			return curr;
+		}
+		
+		if(res > k - 1)
+			hi = mid-1;
+		else 
+			lo = mid+1;
+	}
+}
+ 
+ll rec(int L, int R)
+{
+	stack< pair<int,int> > st;
+	ll ans = 0;
+	
+	st.push(pair<int,int>(L,R));
+	pair<int,int> temp;
+	
+	while(!st.empty())
+	{
+		temp = st.top();
+		st.pop();
+		
+		int i = temp.first, j = temp.second;
+	//	cout << "i: " << i << " j: " << j << endl;
+		
+		if(j <= i)
+			continue;
+		else
+		{
+			int pivot = getKth(i, j, (j-i+2)/2);
+			pivot = pos[pivot];
+	/		cout << "pivot: " << pivot << endl;
+			
+			ans += (j-i+1);
+			
+			st.push(pair<int,int>(i, pivot-1));
+			st.push(pair<int,int>(pivot+1, j));
+		}
+	}
+	
+	return ans;
+}
+ 
+void solve()
+{	
+	cin >> N;
+	
+	int val;
+	
+	for(int i = 0; i < N; i++)
+	{
+		val = read<int>();
+		val--;
+		ptr[val] = i;
+		pos[i] = val;
+	}
+	
+	build(1, 0, N-1);
+	
+	//for(int i = 0; i < N; i++)
+	//	cout << tree[1].arr[i] << " ";
+	//cout << endl;
+	
+	//cout << getKth(0, N-1, (N-1-0+2)/2) << endl;
+	//cout << pos[getKth(0, N-1, (N-1-0+2)/2)] << endl;
+	
+	ll res = rec(0,N-1);
+	
+	cout << res << endl;
+	
+	return;
+}
+ 
+int main()
+{
+	solve();
+	
+	return 0;
+} 

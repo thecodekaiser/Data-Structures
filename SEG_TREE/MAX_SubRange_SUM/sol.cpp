@@ -1,0 +1,162 @@
+// Author: thecodekaiser
+// This code uses Seg-Tree to find the max amount subsegment in a given interval
+#include <iostream>
+#include <cstdlib>
+#include <cstdio>
+
+using namespace std;
+typedef long long ll;
+#define INF 1000007
+
+// Defining the data
+struct data
+{
+	ll ans, pref, suff, sum;
+};
+
+// Function : To combine two segments
+data combine(data L, data R)
+{
+	data res;
+	res.sum = L.sum + R.sum;
+
+	res.pref = max(L.pref, L.sum + R.pref);
+	res.suff = max(R.suff, R.sum + L.suff);
+
+	res.ans  = max(max(L.ans, R.ans), L.suff + R.pref);
+	
+	return res;
+}
+
+
+// Function : To make data
+data make_data(int val)
+{
+	data res;
+	res.sum = val;
+	res.pref = res.suff = res.ans = val;	// Because we are saving the maximum;
+	return res;
+}
+
+template <typename T> class SEG	{
+
+private:
+	T * copyArr;
+	data * tree;
+	int len;
+
+	// Function : To build the tree recursively
+	void build(int Node, int l, int r)
+	{
+		if(l == r)
+			tree[Node] = make_data(copyArr[l]);
+
+		else
+		{
+			int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+		
+			build(left, l, mid);
+			build(right, mid+1, r);
+
+			tree[Node] = combine(tree[left],tree[right]);
+		}
+	}
+
+	// Function : To query
+	data query(int Node, int l, int r, int i, int j)
+	{
+		if(l == i and r == j)
+			return tree[Node];
+		
+		int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+	
+		if(j <= mid)
+			return query(left, l, mid, i, j);
+		if(i > mid)
+			return query(right, mid+1, r, i, j);
+
+		return combine(query(left, l, mid, i, mid), query(right, mid+1, r, mid+1, j));
+	}
+
+	// Updatation
+	void update(int Node, int l, int r, int i, int val)
+	{
+		if(l == r)
+			tree[Node] = make_data(val);
+		else
+		{
+			int left = 2 * Node, right = 2 * Node + 1, mid = (l+r)/2;
+
+			if(i <= mid)
+				update(left, l, mid, i, val);	
+			else	
+				update(right, mid+1, r, i, val);
+			
+			tree[Node] = combine(tree[left], tree[right]);
+		}
+	}
+
+
+public:
+	// Constructor
+	SEG(int * arr, int N)
+	{
+		len = N;
+		copyArr = (T *) malloc (len * sizeof(T));
+		tree = (data *) malloc (4 * len * sizeof(data));
+
+	
+		for(int i = 0; i < len; i++)	copyArr[i] = arr[i];
+
+		
+		build(1, 0, len-1);
+	}
+
+	// Query
+	void query(int i, int j)
+	{
+		data res = query(1, 0, len-1, i, j);
+		printf("%lld\n",res.ans);
+	} 
+
+	// Updation
+	void update(int i, int val)
+	{
+		copyArr[i] = val;
+		update(1, 0, len-1, i, val);
+	}
+};
+
+
+
+
+int main()
+{
+	int N, Q, c, l, r, val;
+	scanf("%d",&N);
+	int ptr[N];
+
+	for(int i = 0; i < N; i++)
+		scanf("%d",&ptr[i]);
+
+	SEG <int> st = SEG <int> (ptr,N);	
+
+
+	scanf("%d",&Q);
+	for(int i = 0; i < Q; i++)
+	{
+		scanf("%d",&c);
+		if (c == 0)
+		{
+			scanf("%d %d",&l, &val);
+			st.update(l-1, val);
+		}
+		else
+		{
+			scanf("%d %d",&l,&r);
+			st.query(l-1, r-1);
+		}
+	}
+
+	return 0;
+}
